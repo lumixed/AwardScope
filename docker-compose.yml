@@ -1,4 +1,19 @@
 services:
+  mongodb:
+    image: mongo:latest
+    container_name: awardscope-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./Backend
@@ -11,6 +26,10 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
+      - MONGODB_URI=mongodb://mongodb:27017/awardscope
+    depends_on:
+      mongodb:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - app-network
@@ -27,6 +46,10 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+
+volumes:
+  mongodb_data:
+
 
 networks:
   app-network:
